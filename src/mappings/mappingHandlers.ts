@@ -1,4 +1,4 @@
-import { ExecuteEvent, Message } from "../types";
+import { Event, Message, Block, Transaction } from "../types";
 import {
   CosmosEvent,
   CosmosBlock,
@@ -6,9 +6,13 @@ import {
   CosmosTransaction,
 } from "@subql/types-cosmos";
 
-/*
+
 export async function handleBlock(block: CosmosBlock): Promise<void> {
-  // If you wanted to index each block in Cosmos (Juno), you could do that here
+  const blockRecord = Block.create({
+    id: block.block.id,
+    height: BigInt(block.block.header.height),
+  });
+  await blockRecord.save();
 }
 
 export async function handleTransaction(tx: CosmosTransaction): Promise<void> {
@@ -19,25 +23,25 @@ export async function handleTransaction(tx: CosmosTransaction): Promise<void> {
   });
   await transactionRecord.save();
 }
-*/
+
 
 export async function handleMessage(msg: CosmosMessage): Promise<void> {
   const messageRecord = Message.create({
     id: `${msg.tx.hash}-${msg.idx}`,
     blockHeight: BigInt(msg.block.block.header.height),
     txHash: msg.tx.hash,
-    sender: msg.msg.decodedMsg.sender,
-    contract: msg.msg.decodedMsg.contract,
+    message: JSON.stringify(msg.msg),
   });
   await messageRecord.save();
 }
 
 export async function handleEvent(event: CosmosEvent): Promise<void> {
-  const eventRecord = ExecuteEvent.create({
+  const eventRecord = Event.create({
     id: `${event.tx.hash}-${event.msg.idx}-${event.idx}`,
     blockHeight: BigInt(event.block.block.header.height),
     txHash: event.tx.hash,
-    contractAddress: event.event.attributes.find(attr => attr.key === '_contract_address').value
+    message: JSON.stringify(event.msg),
+    object: JSON.stringify(event.event),
   });
 
   await eventRecord.save();
